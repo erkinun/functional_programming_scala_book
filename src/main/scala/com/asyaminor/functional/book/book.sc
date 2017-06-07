@@ -19,3 +19,7 @@ val x = List(1,2,3,4,5) match {
 val someList = List(1, 2, 3, 4, 5)
 
 List.tail(someList)
+
+List.foldRight(List(1, 2, 3), Nil:List[Int])(Cons(_, _))
+
+List.length(List(1, 2, 3))

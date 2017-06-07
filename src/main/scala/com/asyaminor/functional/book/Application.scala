@@ -1,14 +1,15 @@
 package com.asyaminor.functional.book
 
+import com.asyaminor.functional.book.datastructures._
+import com.asyaminor.functional.book.datastructures.List.foldRight
+
 import scala.annotation.tailrec
 
 object Application  {
   def main(args: Array[String]): Unit = {
     println("hello world")
 
-    println(isSorted[Int](Array(1,2,3,4), ordered = (a: Int, b: Int) => a < b))
-    println(isSorted[Int](Array(1,3,2,4), ordered = (a: Int, b: Int) => a < b))
-    println(isSorted[Int](Array(4,3,2,1), ordered = (a: Int, b: Int) => a > b))
+    println(List.length(List(1, 2, 3)))
   }
 
   def factorial(n: Int): Int = {
