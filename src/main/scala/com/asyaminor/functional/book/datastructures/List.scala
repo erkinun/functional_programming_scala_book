@@ -73,6 +73,13 @@ object List {
 
   def concat[A](xss: List[List[A]]): List[A] = foldLeft(xss, Nil:List[A])((cur, list) => append(cur, list))
 
+  def add1(xs: List[Int]): List[Int] = xs match {
+    case Nil => Nil
+    case Cons(h, t) => Cons(h + 1, add1(t))
+  }
+
+  def add2(xs: List[Int]): List[Int] = foldRight(xs, Nil:List[Int])((item, cur) => Cons(item + 1, cur))
+
   def apply[A](as: A*): List[A] =
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
