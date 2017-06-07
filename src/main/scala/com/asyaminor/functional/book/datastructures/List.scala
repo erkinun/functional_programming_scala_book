@@ -80,6 +80,13 @@ object List {
 
   def add2(xs: List[Int]): List[Int] = foldRight(xs, Nil:List[Int])((item, cur) => Cons(item + 1, cur))
 
+  def toString(ds: List[Double]): String = ds match {
+    case Nil => ""
+    case Cons(h, t) => h.toString + toString(t)
+  }
+
+  def toStr2(ds: List[Double]): String = foldLeft(ds, "")((acc, d) => acc + d.toString)
+
   def apply[A](as: A*): List[A] =
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
