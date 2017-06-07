@@ -23,3 +23,7 @@ List.tail(someList)
 List.foldRight(List(1, 2, 3), Nil:List[Int])(Cons(_, _))
 
 List.length(List(1, 2, 3))
+
+List.sum4(List(1, 3, 3))
+
+List.concat(List(List(1, 2,3), List(10, 11, 12)))

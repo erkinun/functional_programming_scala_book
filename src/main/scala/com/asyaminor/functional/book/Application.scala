@@ -9,7 +9,7 @@ object Application  {
   def main(args: Array[String]): Unit = {
     println("hello world")
 
-    println(List.length(List(1, 2, 3)))
+    println(List.reverse(List(1, 2, 3)))
   }
 
   def factorial(n: Int): Int = {

@@ -56,12 +56,22 @@ object List {
     case Cons(x, xs) => foldLeft(xs, f(z, x))(f)
   }
 
+  def foldRightWithLeft[A,B](as: List[A], z: B)(f: (A, B) => B): B = foldLeft(as, z)((x, y) => f(y, x))
+  def sum4(as: List[Int]): Int = foldRightWithLeft(as, 0)((x, y) => x + y)
+
   //def add(sum: Int, elem: Int): Int = sum + elem
   def sum3(as: List[Int]): Int = foldLeft(as, 0)((x,y) => x + y)
   def product3(as: List[Int]): Int = foldLeft(as, 1)(_ * _)
   def length3(as: List[Int]): Int = foldLeft(as, 0)((x, _) => x + 1)
 
   def length[A](as: List[A]): Int = foldRight(as, 0)((_,y) => y + 1)
+
+  def reverse[A](as: List[A]): List[A] = foldRight(as, Nil:List[A])((x, y) => Cons(x, y))
+
+  // Implement append in terms of either foldLeft or foldRight.
+  def append[A](a1: List[A], a2: List[A]): List[A] = foldRight(a1, a2)((elem, nextList) => Cons(elem, nextList))
+
+  def concat[A](xss: List[List[A]]): List[A] = foldLeft(xss, Nil:List[A])((cur, list) => append(cur, list))
 
   def apply[A](as: A*): List[A] =
     if (as.isEmpty) Nil
