@@ -87,6 +87,35 @@ object List {
 
   def toStr2(ds: List[Double]): String = foldLeft(ds, "")((acc, d) => acc + d.toString)
 
+  def map[A,B](as: List[A])(f: A => B): List[B] = {
+    def inner(as: List[A], f: A => B, acc: List[B]): List[B] = as match {
+      case Nil => acc
+      case Cons(h, t) => inner(t, f, Cons(f(h), acc))
+    }
+    inner(as, f, Nil:List[B])
+  }
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] = {
+    def inner(as: List[A], f: A => Boolean, acc: List[A]): List[A] = as match {
+      case Nil => acc
+      case Cons(h, t) =>
+        if (f(h)) inner(t, f, Cons(h, acc))
+        else inner(t, f, acc)
+    }
+
+    inner(as, f, Nil:List[A])
+  }
+
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] = {
+
+    def inner(as: List[A], f: A => List[B], acc: List[B]): List[B] = as match {
+      case Nil => acc
+      case Cons(h, t) => inner(t, f, append(acc, f(h)))
+    }
+
+    inner(as, f, Nil: List[B])
+  }
+
   def apply[A](as: A*): List[A] =
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
