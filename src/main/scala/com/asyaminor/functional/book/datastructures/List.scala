@@ -124,6 +124,12 @@ object List {
     case (Cons(ah, at), Cons(bh, bt)) => Cons(ah + bh, addList(at, bt))
   }
 
+  def zipWith[A, B](as: List[A], bs: List[B]): List[(A,B)] = (as, bs) match {
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+    case (Cons(ah, at), Cons(bh, bt)) => Cons((ah, bh), zipWith(at, bt))
+  }
+
   def apply[A](as: A*): List[A] =
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
