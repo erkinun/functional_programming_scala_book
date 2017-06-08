@@ -118,6 +118,12 @@ object List {
     inner(as, f, Nil: List[B])
   }
 
+  def addList(alist: List[Int], bList: List[Int]): List[Int] = (alist, bList) match {
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+    case (Cons(ah, at), Cons(bh, bt)) => Cons(ah + bh, addList(at, bt))
+  }
+
   def apply[A](as: A*): List[A] =
     if (as.isEmpty) Nil
     else Cons(as.head, apply(as.tail: _*))
