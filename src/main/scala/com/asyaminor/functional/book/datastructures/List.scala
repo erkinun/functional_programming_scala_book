@@ -106,6 +106,8 @@ object List {
     inner(as, f, Nil:List[A])
   }
 
+  def filterWithFlatMap[A](as: List[A])(f: A => Boolean): List[A] = flatMap(as)(a => if (f(a)) Cons(a, Nil) else Nil)
+
   def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] = {
 
     def inner(as: List[A], f: A => List[B], acc: List[B]): List[B] = as match {
