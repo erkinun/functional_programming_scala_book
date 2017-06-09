@@ -1,5 +1,7 @@
 package com.asyaminor.functional.book.datastructures
 
+import sun.font.TrueTypeFont
+
 sealed trait List[+A]
 case object Nil extends List[Nothing]
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
@@ -128,6 +130,28 @@ object List {
     case (Nil, _) => Nil
     case (_, Nil) => Nil
     case (Cons(ah, at), Cons(bh, bt)) => Cons((ah, bh), zipWith(at, bt))
+  }
+
+  // naming is important! 
+  def hasSubsequence[A](as: List[A], sub: List[A]): Boolean = {
+
+    def innerCheck[A](as: List[A], sub: List[A]): Boolean = {
+      (sub, as) match {
+        case (Nil, _) => true
+        case (_, Nil) => false
+        case (Cons(hs, ts), Cons(h, t)) =>
+          if (hs == h) innerCheck(t, ts)
+          else false
+      }
+    }
+
+    (sub, as) match {
+      case (Nil, _) => true
+      case (_, Nil) => false
+      case (Cons(hs, _), Cons(h, t)) =>
+        if (hs == h && innerCheck(as, sub)) true
+        else hasSubsequence(t, sub)
+    }
   }
 
   def apply[A](as: A*): List[A] =
