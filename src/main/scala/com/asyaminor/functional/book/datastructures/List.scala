@@ -132,7 +132,7 @@ object List {
     case (Cons(ah, at), Cons(bh, bt)) => Cons((ah, bh), zipWith(at, bt))
   }
 
-  // naming is important! 
+  // naming is important!
   def hasSubsequence[A](as: List[A], sub: List[A]): Boolean = {
 
     def innerCheck[A](as: List[A], sub: List[A]): Boolean = {
