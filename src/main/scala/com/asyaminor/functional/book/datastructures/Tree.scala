@@ -30,4 +30,12 @@ object Tree {
     case Leaf(v) => Leaf(f(v))
     case Branch(left, right) => Branch(map(left)(f), map(right)(f))
   }
+
+  def fold[T, U](tree: Tree[T])(baseF: T => U)(f:(U, U) => U): U = tree match {
+    case Leaf(v) => baseF(v)
+    case Branch(left, right) => f(fold(left)(baseF)(f), fold(right)(baseF)(f))
+  }
+
+  def sizeWithFold[T](tree: Tree[T]): Int = fold(tree)(_ => 1)((l, r) => l + r)
+  def mapWithFold[T, U](tree: Tree[T])(f: T => U): Tree[U] = fold(tree)(t => Leaf(f(t)):Tree[U])((l, r) => Branch(l, r))
 }
