@@ -25,4 +25,9 @@ object Tree {
 
       leftMax max rightMax
   }
+
+  def map[T,U](tree: Tree[T])(f: T => U): Tree[U] = tree match {
+    case Leaf(v) => Leaf(f(v))
+    case Branch(left, right) => Branch(map(left)(f), map(right)(f))
+  }
 }
