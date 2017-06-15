@@ -1,6 +1,5 @@
 package com.asyaminor.functional.book.datastructures
 
-import sun.font.TrueTypeFont
 
 sealed trait List[+A]
 case object Nil extends List[Nothing]
