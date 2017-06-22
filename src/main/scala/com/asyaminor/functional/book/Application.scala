@@ -1,7 +1,6 @@
 package com.asyaminor.functional.book
 
-import com.asyaminor.functional.book.datastructures._
-import com.asyaminor.functional.book.datastructures.List.foldRight
+import com.asyaminor.functional.book.functions.Functions
 
 import scala.annotation.tailrec
 
@@ -9,7 +8,8 @@ object Application  {
   def main(args: Array[String]): Unit = {
     println("hello world")
 
-    println(List.reverse(List(1, 2, 3)))
+    //println(List.reverse(List(1, 2, 3)))
+    println(Functions.juxta[Int](List(Functions.sq, Functions.plus5))(10))
   }
 
   def factorial(n: Int): Int = {
