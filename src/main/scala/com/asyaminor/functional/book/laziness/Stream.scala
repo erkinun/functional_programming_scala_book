@@ -45,6 +45,11 @@ sealed trait Stream[+A] {
   }
 
   def forAllFr(p: A => Boolean): Boolean = foldRight(true)((a, b) => p(a) && b)
+
+  def map[B](f: A => B): Stream[B] = foldRight(Empty:Stream[B])((a, b) => Stream.cons(f(a), b))
+  def filter(p: A => Boolean): Stream[A] = foldRight(Empty:Stream[A])((a, b) => if (p(a)) Stream.cons(a, b) else b)
+  def append[B >: A](elem: => Stream[B]): Stream[B] = foldRight(elem)((a,b) => Stream.cons(a, b))
+  def flatMap[B](f: A => Stream[B]): Stream[B] = foldRight(Stream.empty[B])((a, b) => f(a) append(b))
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
