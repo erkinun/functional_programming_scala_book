@@ -6,6 +6,11 @@ sealed trait Stream[+A] {
     case Cons(h, _) => Some(h())
   }
 
+  def headOptionFr: Option[A] = foldRight(None:Option[A])((a, b) => b match {
+    case None => Some(a)
+    case Some(_) => Some(a)
+  })
+
   def toList: List[A] = this match {
     case Empty => Nil
     case Cons(h, t) => h() :: t().toList
