@@ -6,10 +6,10 @@ import scala.annotation.tailrec
 
 object Application  {
   def main(args: Array[String]): Unit = {
-    println("hello world")
+    println("hello scala")
 
     //println(List.reverse(List(1, 2, 3)))
-    println(Functions.juxta[Int](List(Functions.sq, Functions.plus5))(10))
+    //println(Functions.juxta[Int](List(Functions.sq, Functions.plus5))(10))
   }
 
   def factorial(n: Int): Int = {

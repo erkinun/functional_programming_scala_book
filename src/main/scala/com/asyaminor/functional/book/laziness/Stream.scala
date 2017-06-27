@@ -11,6 +11,12 @@ sealed trait Stream[+A] {
     case Some(_) => Some(a)
   })
 
+  def exists(p: A => Boolean): Boolean = this match {
+    case Cons(h, t) => p(h()) || t().exists(p)
+    case _ => false
+  }
+
+
   def toList: List[A] = this match {
     case Empty => Nil
     case Cons(h, t) => h() :: t().toList
@@ -49,7 +55,8 @@ sealed trait Stream[+A] {
   def map[B](f: A => B): Stream[B] = foldRight(Empty:Stream[B])((a, b) => Stream.cons(f(a), b))
   def filter(p: A => Boolean): Stream[A] = foldRight(Empty:Stream[A])((a, b) => if (p(a)) Stream.cons(a, b) else b)
   def append[B >: A](elem: => Stream[B]): Stream[B] = foldRight(elem)((a,b) => Stream.cons(a, b))
-  def flatMap[B](f: A => Stream[B]): Stream[B] = foldRight(Stream.empty[B])((a, b) => f(a) append(b))
+  def flatMap[B](f: A => Stream[B]): Stream[B] = foldRight(Stream.empty[B])((a, b) => f(a) append b)
+
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -63,6 +70,8 @@ object Stream {
   }
 
   def empty[A]: Stream[A] = Empty
+
+  def constant[A](a: A): Stream[A] = Stream.cons(a, constant(a))
 
   def apply[A](as: A*): Stream[A] = if (as.isEmpty) empty else cons(as.head, apply(as.tail: _*))
 }
