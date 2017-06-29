@@ -95,5 +95,10 @@ object Stream {
 
   def ones: Stream[Int] = unfold(1)(_ => Some(1, 1))
 
+  def map[A,B](as: Stream[A])(f: A => B): Stream[B] = unfold((empty[B], as)) {
+    case (_, Empty) => None
+    case (sb, Cons(ha, ta)) => Some(f(ha()), (sb, ta()))
+  }
+
   def apply[A](as: A*): Stream[A] = if (as.isEmpty) empty else cons(as.head, apply(as.tail: _*))
 }
