@@ -28,6 +28,11 @@ sealed trait Stream[+A] {
     else Cons(h, () => t().take(n-1))
   }
 
+  def takeU(n: Int): Stream[A] = Stream.unfold[A, (Int, Stream[A])]((n, this))(s => s match {
+    case (_, Empty) => None
+    case (num, Cons(h,t)) => if (num == 0) None else Some(h(), (num - 1, t()))
+  })
+
   def drop(n: Int): Stream[A] = this match {
     case Empty => Empty
     case Cons(_, t) => if (n == 0) this
