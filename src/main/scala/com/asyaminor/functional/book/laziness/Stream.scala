@@ -50,6 +50,13 @@ sealed trait Stream[+A] {
     case (Cons(h, t)) => if (!p(h())) None else Some(h(), t())
   }
 
+  def zipAll[B](s2: Stream[B]): Stream[(Option[A],Option[B])] = Stream.unfold[(Option[A],Option[B]), (Stream[A], Stream[B])](this, s2) {
+    case (Cons(h, t), Empty) => Some((Some(h()), None), (t(), Empty))
+    case (Empty, Cons(h, t)) => Some((None, Some(h())), (Empty, t()))
+    case (Cons(ha, ta), Cons(hb, tb)) => Some((Some(ha()), Some(hb())), (ta(), tb()))
+    case (Empty, Empty) => None
+  }
+
   def forAll(p: A => Boolean): Boolean = this match {
     case Empty => true
     case Cons(h, t) => if (p(h())) t().forAll(p) else false
