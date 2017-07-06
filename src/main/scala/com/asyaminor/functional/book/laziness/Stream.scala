@@ -28,10 +28,10 @@ sealed trait Stream[+A] {
     else Cons(h, () => t().take(n-1))
   }
 
-  def takeU(n: Int): Stream[A] = Stream.unfold[A, (Int, Stream[A])]((n, this))(s => s match {
+  def takeU(n: Int): Stream[A] = Stream.unfold[A, (Int, Stream[A])]((n, this)) {
     case (_, Empty) => None
-    case (num, Cons(h,t)) => if (num == 0) None else Some(h(), (num - 1, t()))
-  })
+    case (num, Cons(h, t)) => if (num == 0) None else Some(h(), (num - 1, t()))
+  }
 
   def drop(n: Int): Stream[A] = this match {
     case Empty => Empty
@@ -43,6 +43,11 @@ sealed trait Stream[+A] {
     case Empty => Empty
     case Cons(h, t) => if(p(h())) Cons(h, () => t().takeWhile(p))
     else t().takeWhile(p)
+  }
+
+  def takeWhileU(p: A => Boolean): Stream[A] = Stream.unfold[A, Stream[A]](this) {
+    case (Empty) => None
+    case (Cons(h, t)) => if (!p(h())) None else Some(h(), t())
   }
 
   def forAll(p: A => Boolean): Boolean = this match {
