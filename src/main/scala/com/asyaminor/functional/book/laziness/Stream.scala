@@ -97,6 +97,12 @@ object Stream {
     }
   }
 
+  def zipWith[A, B](as: Stream[A], bs: Stream[B]): Stream[(A,B)] = unfold[(A,B), (Stream[A], Stream[B])](as, bs) {
+    case (Empty, _) => None
+    case (_, Empty) => None
+    case (Cons(ha, ta), Cons(hb, tb)) => Some((ha(), hb()), (ta(), tb()))
+  }
+
   def fibsU: Stream[Int] = unfold[Int, (Int, Int)]((0,1))(s => Some((s._1, (s._2, s._1 + s._2))))
 
   def fromU(n: Int): Stream[Int] = unfold[Int, Int](n)(s => Some((s, s + 1)))
