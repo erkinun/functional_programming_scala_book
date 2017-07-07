@@ -74,6 +74,14 @@ sealed trait Stream[+A] {
   def append[B >: A](elem: => Stream[B]): Stream[B] = foldRight(elem)((a,b) => Stream.cons(a, b))
   def flatMap[B](f: A => Stream[B]): Stream[B] = foldRight(Stream.empty[B])((a, b) => f(a) append b)
 
+  def startsWith[A](s: Stream[A]): Boolean = (this, s) match {
+    case (Empty, Empty) => true
+    case (_, Empty) => true
+    case (Cons(h,t), Cons(hs, ts)) =>
+      if (h() == hs()) t().startsWith(ts())
+      else false
+  }
+
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
