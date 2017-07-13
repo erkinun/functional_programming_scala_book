@@ -51,7 +51,14 @@ object SimpleRNG {
   }
 
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
-    ???
+    val (generator, list) = (0 to count).foldLeft((rng, Nil:List[Int]))((tp, b) => {
+      val gen = tp._1
+      val (i, gNext) = gen.nextInt
+
+      (gNext, i::tp._2)
+    })
+
+    (list, generator)
   }
 }
 
