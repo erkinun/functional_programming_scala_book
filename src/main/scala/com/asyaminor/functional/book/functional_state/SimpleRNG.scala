@@ -77,6 +77,18 @@ object SimpleRNG {
     ((d1, d2, d3), r4)
   }
 
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = rng => {
+    fs.foldLeft((Nil:List[A], rng))((a, b) => {
+      val rng = a._2
+      val acc = a._1
+
+      val (value, rngNext) = b(rng)
+      (value :: acc, rngNext)
+    })
+  }
+
+  def intsSeq(count: Int): Rand[List[Int]] = sequence(List.fill(count)(int))
+
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
     val (generator, list) = (0 to count).foldLeft((rng, Nil:List[Int]))((tp, b) => {
       val gen = tp._1
