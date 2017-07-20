@@ -1,5 +1,6 @@
 package com.asyaminor.functional.book.functional_state
 
+
 trait RNG {
   def nextInt: (Int, RNG)
 
@@ -14,43 +15,47 @@ case class SimpleRNG(seed: Long) extends RNG {
   }
 }
 
-object SimpleRNG {
+case class State[S, +A](run: S => (A,S)) {
 
-  type Rand[+A] = RNG => (A, RNG)
+}
 
-  def unit[A](a: A): Rand[A] = rng => (a, rng)
-  def int: Rand[Int] = rng => rng.nextInt
-  def map[A,B](s: Rand[A])(f: A => B): Rand[B] = rng => {
-    val (a, rng2) = s(rng)
-    (f(a), rng2)
-  }
+object State {
+  type Rand[A] = State[RNG, A]
+  def unit[A](a: A): Rand[A] = State(rng => (a, rng))
+  def int: Rand[Int] = State(rng => rng.nextInt)
 
-  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = rng => {
-    val (a, rng2) = ra(rng)
-    val (b, rng3) = rb(rng2)
-
-    (f(a, b), rng3)
-  }
-
-  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = rng => {
-    val (a, next) = f(rng)
-    g(a)(next)
-  }
-
-  def mapF[A,B](s: Rand[A])(f: A => B): Rand[B] = flatMap(s)(a => { rng =>
-    (f(a), rng)
+  def map[S,A,B](a: Rand[A])(f: A => B): Rand[B] = State(rng => {
+    val (aValue, rng2) = a.run(rng)
+    (f(aValue), rng)
   })
 
-  def map2F[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = flatMap(ra)(a => { rng =>
-    val (b, next) = rb(rng)
+  def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = State(rng => {
+    val (a, rng2) = ra.run(rng)
+    val (b, rng3) = rb.run(rng2)
+
+    (f(a, b), rng3)
+  })
+
+  def flatMap[A,B](f: Rand[A])(g: A => Rand[B]): Rand[B] = State(rng => {
+    val (a, next) = f.run(rng)
+    //g(a)(next)
+    g(a).run(next)
+  })
+
+  def mapF[A,B](s: Rand[A])(f: A => B): Rand[B] = flatMap(s)(a => { State(rng =>
+    (f(a), rng)
+  )})
+
+  def map2F[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = flatMap(ra)(a => State{ rng =>
+    val (b, next) = rb.run(rng)
     (f(a, b), next)
   })
 
-  def nonNegativeLessThan(n: Int): Rand[Int] = flatMap(nonNegativeInt)(i => { rng =>
+  def nonNegativeLessThan(n: Int): Rand[Int] = flatMap(nonNegativeInt)(i => State{ rng =>
     val mod = i % n
     if (i + (n-1) - mod >= 0)
       (mod, rng)
-    else nonNegativeLessThan(n)(rng)
+    else nonNegativeLessThan(n).run(rng)
   })
 
   def both[A,B](ra: Rand[A], rb: Rand[B]): Rand[(A,B)] = map2(ra, rb)((_, _))
@@ -58,7 +63,7 @@ object SimpleRNG {
   val randIntDouble: Rand[(Int, Double)] = both(int, double)
   val randDoubleInt: Rand[(Double, Int)] = both(double, int)
 
-  def nonNegativeInt(rng: RNG): (Int, RNG) = {
+  def nonNegativeInt: Rand[Int] = State{ rng =>
     val (i1, rngNext) = rng.nextInt
 
     if (i1 == Int.MinValue) (0, rngNext)
@@ -70,43 +75,43 @@ object SimpleRNG {
 
   def doubleM: Rand[Double] = map(nonNegativeInt)(i => i.toDouble / Int.MaxValue)
 
-  def double(rng: RNG): (Double, RNG) = {
-    val (nonNeg, next) = nonNegativeInt(rng)
+  def double:Rand[Double] = State { rng =>
+    val (nonNeg, next) = nonNegativeInt.run(rng)
 
     (nonNeg.toDouble / Int.MaxValue.toDouble, next)
   }
 
   def intDouble(rng: RNG): ((Int,Double), RNG) = {
     val (i1, r2) = rng.nextInt
-    val (d1, r3) = double(r2)
+    val (d1, r3) = double.run(r2)
 
     ((i1, d1), r3)
   }
 
   def doubleInt(rng: RNG): ((Double,Int), RNG) = {
-    val (d1, r2) = double(rng)
+    val (d1, r2) = double.run(rng)
     val (i1, r3) = r2.nextInt
 
     ((d1, i1), r3)
   }
 
   def double3(rng: RNG): ((Double,Double,Double), RNG) = {
-    val (d1, r2) = double(rng)
-    val (d2, r3) = double(r2)
-    val (d3, r4) = double(r3)
+    val (d1, r2) = double.run(rng)
+    val (d2, r3) = double.run(r2)
+    val (d3, r4) = double.run(r3)
 
     ((d1, d2, d3), r4)
   }
 
-  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = rng => {
+  def sequence[A](fs: List[Rand[A]]): Rand[List[A]] = State(rng => {
     fs.foldLeft((Nil:List[A], rng))((a, b) => {
       val rng = a._2
       val acc = a._1
 
-      val (value, rngNext) = b(rng)
+      val (value, rngNext) = b.run(rng)
       (value :: acc, rngNext)
     })
-  }
+  })
 
   def intsSeq(count: Int): Rand[List[Int]] = sequence(List.fill(count)(int))
 
