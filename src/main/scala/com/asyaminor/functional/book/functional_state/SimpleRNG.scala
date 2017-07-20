@@ -26,7 +26,7 @@ object State {
 
   def map[S,A,B](a: Rand[A])(f: A => B): Rand[B] = State(rng => {
     val (aValue, rng2) = a.run(rng)
-    (f(aValue), rng)
+    (f(aValue), rng2)
   })
 
   def map2[A,B,C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = State(rng => {
