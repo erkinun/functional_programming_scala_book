@@ -24,6 +24,9 @@ object State {
   def unit[A](a: A): Rand[A] = State(rng => (a, rng))
   def int: Rand[Int] = State(rng => rng.nextInt)
 
+  def get[S]: State[S, S] = State(s => (s, s))
+  def set[S](s: S): State[S, Unit] = State(_ => ((), s))
+
   def map[S,A,B](a: Rand[A])(f: A => B): Rand[B] = State(rng => {
     val (aValue, rng2) = a.run(rng)
     (f(aValue), rng2)
