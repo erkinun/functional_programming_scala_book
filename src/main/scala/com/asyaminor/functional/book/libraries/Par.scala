@@ -14,7 +14,7 @@ object Par {
     es => es.submit(new Callable[A] {
       override def call(): A = a(es).get()
     })
-  //def lazyUnit[A](a: => A): Par[A] = fork(unit(a))
+  def lazyUnit[A](a: => A): Par[A] = fork(unit(a))
   def run[A](s: ExecutorService)(a: Par[A]): Future[A] = a(s)
 
   private case class UnitFuture[A](get: A) extends Future[A] {
@@ -31,4 +31,6 @@ object Par {
 
       UnitFuture(f(af.get, bf.get))
     }
+
+  def asyncF[A,B](f: A => B): A => Par[B] = a => lazyUnit(f(a))
 }
