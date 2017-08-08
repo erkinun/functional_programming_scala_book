@@ -71,4 +71,18 @@ object Par {
 
     choiceN(choiceSelector)(choices)
   }
+
+  def chooser[A,B](pa: Par[A])(choices: A => Par[B]): Par[B] =
+    es => {
+      val a = run(es)(pa).get()
+      choices(a)(es)
+    }
+
+  def choiceChooser[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = {
+    chooser(cond)(b => if(b) t else f)
+  }
+
+  def choiceNChooser[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = {
+    chooser(n)(num => choices(num))
+  }
 }
