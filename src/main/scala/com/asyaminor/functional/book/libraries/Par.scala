@@ -85,4 +85,9 @@ object Par {
   def choiceNChooser[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = {
     flatMap(n)(num => choices(num))
   }
+
+  def join[A](a: Par[Par[A]]): Par[A] = es => {
+    val joined = run(es)(a).get()
+    joined(es)
+  }
 }
