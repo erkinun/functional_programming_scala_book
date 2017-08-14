@@ -39,6 +39,16 @@ object Gen {
   }
 
   def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] = boolean.flatMap(res => if(res) g1 else g2)
+
+  def weighted[A](g1: (Gen[A],Double), g2: (Gen[A],Double)): Gen[A] = {
+    val w1 = g1._2
+    val w2 = g2._2
+
+    val ratio = w1.min(w2) / (w1 + w2)
+    val rangeGen = Gen.choose(0, 100)
+
+    rangeGen.flatMap(r => if(r < 100 * ratio) g1._1 else g2._1)
+  }
 }
 
 case class Gen[A](sample: State[RNG,A]) {
