@@ -37,6 +37,8 @@ object Gen {
     val hede: List[State[RNG, A]] = List.fill(n)(g.sample)
     Gen(State.sequence(hede))
   }
+
+  def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] = boolean.flatMap(res => if(res) g1 else g2)
 }
 
 case class Gen[A](sample: State[RNG,A]) {
