@@ -1,26 +1,48 @@
 package com.asyaminor.functional.book.libraries.testing
 
 import com.asyaminor.functional.book.functional_state.State.Rand
+import com.asyaminor.functional.book.laziness.Stream
 import com.asyaminor.functional.book.functional_state.{RNG, State}
-import com.asyaminor.functional.book.libraries.testing.Prop.{FailedCase, SuccessCount}
+import com.asyaminor.functional.book.libraries.testing.Prop.{FailedCase, SuccessCount, TestCases}
 
-import scala.collection.immutable
 
-trait Prop {
-  def check: Either[(FailedCase, SuccessCount), SuccessCount]
-//  def &&(p: Prop): Prop = new Prop {
-//    def check: Boolean = Prop.this.check && p.check
-//  }
-}
+case class Prop(run: (TestCases, RNG) => Result)
 
 object Prop {
+  type TestCases = Int
   type FailedCase = String
   type SuccessCount = Int
+
+//  def forAll[A](as: Gen[A])(f: A => Boolean): Prop = Prop {
+//    (n,rng) => randomStream(as)(rng).zipAll(Stream.from(0)).take(n).map {
+//      case (a, i) => try {
+//        if (f(a)) Passed else Falsified(a.toString, i)
+//      } catch { case e: Exception => Falsified(buildMsg(a, e), i) }
+//    }.find(_.isFalsified).getOrElse(Passed)
+//  }
+
+  def randomStream[A](g: Gen[A])(rng: RNG): Stream[A] = {
+    Stream.unfold(rng)(rng => Some(g.sample.run(rng)))
+  }
+
+  def buildMsg[A](s: A, e: Exception): String =
+    s"test case: $s\n" +
+      s"generated an exception: ${e.getMessage}\n" + s"stack trace:\n ${e.getStackTrace.mkString("\n")}"
+}
+
+sealed trait Result {
+  def isFalsified: Boolean
+}
+
+case object Passed extends Result {
+  override def isFalsified = false
+}
+
+case class Falsified(failure: FailedCase, successes: SuccessCount) extends Result {
+  override def isFalsified = true
 }
 
 object Gen {
-  //def listOf[A](a: Gen[A]): Gen[List[A]]
-  //def forAll[A](a: Gen[A])(f: A => Boolean): Prop
 
   def choose(start: Int, stopExclusive: Int): Gen[Int] = {
     val rand: Rand[Int] = State.nonNegativeLessThan(stopExclusive - start)
