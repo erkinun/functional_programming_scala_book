@@ -1,5 +1,6 @@
 package com.asyaminor.functional.book.libraries.parser
 
+import scala.language.higherKinds
 import scala.util.matching.Regex
 
 object Parsing {
@@ -7,7 +8,6 @@ object Parsing {
 }
 
 trait Parsers[ParseError, Parser[+_]] {
-
   self =>
 
   // primitives
@@ -27,19 +27,12 @@ trait Parsers[ParseError, Parser[+_]] {
   def many[A](p: Parser[A]): Parser[List[A]] = map2(p, many(p))(_ :: _) or succeed(List())
   def map[A,B](a: Parser[A])(f: A => B): Parser[B] = a.flatMap(aVal => succeed(f(aVal)))
 
-
   def product[A,B](p: Parser[A], p2: => Parser[B]): Parser[(A,B)] = p.flatMap(a => p2.flatMap(b => succeed((a, b))))
-
-
-
 
   def map2[A,B,C](p: Parser[A], p2: => Parser[B])(f: (A,B) => C): Parser[C] = p.flatMap(a => p2.map(b => f(a,b)))
   def many1[A](p: Parser[A]): Parser[List[A]] = map2(p, many(p))((a, b) => a :: b)
 
   def listOfN[A](n: Int, p: Parser[A]): Parser[List[A]] = map2(succeed(n), p){ case (a, b) => Range(0, a).map(_ => b).toList }
-
-
-
 
   case class ParserOps[A](p: Parser[A]) {
     def |[B>:A](p2: Parser[B]): Parser[B] = self.or(p,p2)
@@ -47,6 +40,7 @@ trait Parsers[ParseError, Parser[+_]] {
 
     def many: Parser[List[A]] = self.many(p)
     def map[B](f: A => B): Parser[B] = self.map(p)(f)
+    def slice: Parser[String] = self.slice(p)
 
     def product[B](p2: Parser[B]): Parser[(A,B)] = self.product(p, p2)
     def **[B](p2: Parser[B]): Parser[(A,B)] = self.product(p, p2)
