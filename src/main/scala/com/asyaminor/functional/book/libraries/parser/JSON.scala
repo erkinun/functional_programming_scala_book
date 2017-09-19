@@ -1,6 +1,11 @@
 package com.asyaminor.functional.book.libraries.parser
+package fpinscala.parsing
+
+import language.higherKinds
+import language.implicitConversions
 
 trait JSON
+
 object JSON {
   case object JNull extends JSON
   case class JNumber(get: Double) extends JSON
@@ -9,25 +14,57 @@ object JSON {
   case class JArray(get: IndexedSeq[JSON]) extends JSON
   case class JObject(get: Map[String, JSON]) extends JSON
 
-  def jsonParser[Err,Parser[+_]](P: Parsers[Err,Parser]): Parser[JSON] = {
-    import P._
-    val spaces = char(' ').many.slice
-    val nullP: Parser[JSON] = string("null") map(_ => JNull)
-    val numberP: Parser[JNumber] = "-?(0|\\d*)(\\.\\d*)?((e|E)(+|-)?\\d*)?".r map (str => JNumber(str.toDouble))
-    val jStringP: Parser[JString] = "\"w\"".r map(str => JString(str)) // only selecting words
-    val jBoolP: Parser[JBool] = string("true") | string("false") map(b => JBool(b.toBoolean))
-    val jArrayP: Parser[JArray] = ???
-    val jObjectP: Parser[JObject] = ???
-    def valueParser(chunk: String): Parser[JSON] = nullP | numberP | jStringP | jBoolP | jArrayP | jObjectP
+  def jsonParser[Parser[+_]](P: Parsers[Parser]): Parser[JSON] = {
+    // we'll hide the string implicit conversion and promote strings to tokens instead
+    // this is a bit nicer than having to write token everywhere
+    import P.{string => _, _}
+    implicit def tok(s: String) = token(P.string(s))
 
-    ???
-
-    // first
-    // start with an object // question: what about whitespace?
-    // then parse key value pairs ===> probably many of them
-    // parser for key value will need key parser and value parser
-    // key parser is basically a regex parser for \"some_name\"
-    // value parser something like null | number | string | bool | array | object(which recurse somehow)
+    def array = surround("[","]")(
+      value sep "," map (vs => JArray(vs.toIndexedSeq))) scope "array"
+    def obj = surround("{","}")(
+      keyval sep "," map (kvs => JObject(kvs.toMap))) scope "object"
+    def keyval = escapedQuoted ** (":" *> value)
+    def lit = scope("literal") {
+      "null".as(JNull) |
+        double.map(JNumber(_)) |
+        escapedQuoted.map(JString(_)) |
+        "true".as(JBool(true)) |
+        "false".as(JBool(false))
+    }
+    def value: Parser[JSON] = lit | obj | array
+    root(whitespace *> (obj | array))
   }
 }
 
+/**
+  * JSON parsing example.
+  */
+object JSONExample extends App {
+  val jsonTxt = """
+  {
+    "Company name" : "Microsoft Corporation",
+    "Ticker"  : "MSFT",
+    "Active"  : true,
+    "Price"   : 30.66,
+    "Shares outstanding" : 8.38e9,
+    "Related companies" : [ "HPQ", "IBM", "YHOO", "DELL", "GOOG" ]
+  }
+  """
+
+  val malformedJson1 = """
+  {
+    "Company name" ; "Microsoft Corporation"
+  }
+  """
+
+  val malformedJson2 = """
+  [
+    [ "HPQ", "IBM",
+    "YHOO", "DELL" ++
+    "GOOG"
+    ]
+  ]
+  """
+
+}
