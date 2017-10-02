@@ -78,4 +78,15 @@ object Monoid {
     }
     override def zero: WC = Stub("")
   }
+
+  def count(s: String): Int = {
+    def unstub(chars: String) = if (chars.isEmpty) 0 else 1
+
+    val wc = foldMapV(s, wcMonoid)((s) => {Stub(s.toString)})
+
+    wc match {
+      case Stub(chars) => unstub(chars)
+      case Part(l, w, r) => unstub(l) + w + unstub(r)
+    }
+  }
 }
