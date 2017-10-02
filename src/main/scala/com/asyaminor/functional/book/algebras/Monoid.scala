@@ -64,4 +64,18 @@ object Monoid {
       v.map(f).head
     }
   }
+
+  sealed trait WC
+  case class Stub(chars: String) extends WC
+  case class Part(lStub: String, words: Int, rStub: String) extends WC
+
+  val wcMonoid: Monoid[WC] = new Monoid[WC] {
+    override def op(a1: WC, a2: WC): WC = (a1, a2) match {
+      case (Stub(c1), Stub(c2)) => Stub(c1+c2)
+      case (Stub(c1), Part(l, w, r)) => Part(c1 + l, w, r)
+      case (Part(l, w, r), Stub(c2)) => Part(l, w, r + c2)
+      case (Part(l1, w1, _), Part(_, w2, r2)) => Part(l1, w1 + w2 + 1, r2)
+    }
+    override def zero: WC = Stub("")
+  }
 }
