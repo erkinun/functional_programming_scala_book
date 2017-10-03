@@ -97,6 +97,8 @@ object Monoid {
     def foldLeft[A,B](as: F[A])(z: B)(f: (B,A) => B): B
     def foldMap[A,B](as: F[A])(f: A => B)(mb: Monoid[B]): B
     def concatenate[A](as: F[A])(m: Monoid[A]): A = foldLeft(as)(m.zero)(m.op)
+
+    def toList[A](as: F[A]): List[A] = foldRight(as)(List[A]())(_ :: _)
   }
 
   val foldableList = new Foldable[List] {
@@ -144,4 +146,5 @@ object Monoid {
 
     override def foldMap[A, B](as: Option[A])(f: (A) => B)(mb: Monoid[B]) = as.map(f).foldLeft(mb.zero)(mb.op)
   }
+
 }
