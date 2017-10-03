@@ -82,7 +82,7 @@ object Monoid {
   def count(s: String): Int = {
     def unstub(chars: String) = if (chars.isEmpty) 0 else 1
 
-    val wc = foldMapV(s, wcMonoid)((s) => {Stub(s.toString)})
+    val wc = foldMapV(s, wcMonoid)((s) => { Stub(s.toString) })
 
     wc match {
       case Stub(chars) => unstub(chars)
@@ -103,5 +103,21 @@ object Monoid {
     override def foldLeft[A, B](as: List[A])(z: B)(f: (B, A) => B) = as.foldLeft(z)(f)
 
     override def foldMap[A, B](as: List[A])(f: (A) => B)(mb: Monoid[B]) = as.map(f).foldLeft(mb.zero)(mb.op)
+  }
+
+  val foldableSeq = new Foldable[IndexedSeq] {
+    override def foldRight[A, B](as: IndexedSeq[A])(z: B)(f: (A, B) => B) = as.foldRight(z)(f)
+
+    override def foldLeft[A, B](as: IndexedSeq[A])(z: B)(f: (B, A) => B) = as.foldLeft(z)(f)
+
+    override def foldMap[A, B](as: IndexedSeq[A])(f: (A) => B)(mb: Monoid[B]) = as.map(f).foldLeft(mb.zero)(mb.op)
+  }
+
+  val foldableStream = new Foldable[Stream] {
+    override def foldRight[A, B](as: Stream[A])(z: B)(f: (A, B) => B) = as.foldRight(z)(f)
+
+    override def foldLeft[A, B](as: Stream[A])(z: B)(f: (B, A) => B) = as.foldLeft(z)(f)
+
+    override def foldMap[A, B](as: Stream[A])(f: (A) => B)(mb: Monoid[B]) = as.map(f).foldLeft(mb.zero)(mb.op)
   }
 }
