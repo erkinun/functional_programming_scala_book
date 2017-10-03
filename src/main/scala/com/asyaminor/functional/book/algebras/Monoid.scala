@@ -1,5 +1,7 @@
 package com.asyaminor.functional.book.algebras
 
+import com.asyaminor.functional.book.datastructures.{Branch, Leaf, Tree}
+
 trait Monoid[A] {
   def op(a1: A, a2: A): A
   def zero: A
@@ -119,5 +121,27 @@ object Monoid {
     override def foldLeft[A, B](as: Stream[A])(z: B)(f: (B, A) => B) = as.foldLeft(z)(f)
 
     override def foldMap[A, B](as: Stream[A])(f: (A) => B)(mb: Monoid[B]) = as.map(f).foldLeft(mb.zero)(mb.op)
+  }
+
+  val foldableTree = new Foldable[Tree] {
+    override def foldRight[A, B](as: Tree[A])(z: B)(f: (A, B) => B) = as match {
+      case Leaf(value) => f(value, z)
+      case Branch(l, r) => foldRight(l)(foldRight(r)(z)(f))(f)
+    }
+
+    override def foldLeft[A, B](as: Tree[A])(z: B)(f: (B, A) => B) = as match {
+      case Leaf(value) => f(z, value)
+      case Branch(l, r) => foldLeft(r)(foldLeft(l)(z)(f))(f)
+    }
+
+    override def foldMap[A, B](as: Tree[A])(f: (A) => B)(mb: Monoid[B]) = Tree.fold(as)(f)(mb.op)
+  }
+
+  val foldableOption = new Foldable[Option] {
+    override def foldRight[A, B](as: Option[A])(z: B)(f: (A, B) => B) = as.foldRight(z)(f)
+
+    override def foldLeft[A, B](as: Option[A])(z: B)(f: (B, A) => B) = as.foldLeft(z)(f)
+
+    override def foldMap[A, B](as: Option[A])(f: (A) => B)(mb: Monoid[B]) = as.map(f).foldLeft(mb.zero)(mb.op)
   }
 }
