@@ -37,6 +37,10 @@ trait Monad[F[_]] {
     case Nil => unit(Nil)
     case h :: t => flatMap(f(h))(b => map(traverse(t)(f))(list => b :: list))
   }
+
+  def replicateM[A](n: Int, ma: F[A]): F[List[A]] = sequence(List.fill(n)(ma))
+
+  def product[A,B](ma: F[A], mb: F[B]): F[(A, B)] = map2(ma, mb)((_, _))
 }
 
 object Monad {
