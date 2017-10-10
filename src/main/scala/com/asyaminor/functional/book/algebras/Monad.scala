@@ -41,6 +41,15 @@ trait Monad[F[_]] {
   def replicateM[A](n: Int, ma: F[A]): F[List[A]] = sequence(List.fill(n)(ma))
 
   def product[A,B](ma: F[A], mb: F[B]): F[(A, B)] = map2(ma, mb)((_, _))
+
+  def filterM[A](ms: List[A])(f: A => F[Boolean]): F[List[A]] = ms match {
+    case Nil => unit(Nil)
+    case h :: t => flatMap(f(h))(b => if(b) map(filterM(t)(f))(h :: _) else filterM(t)(f))
+  }
+
+  def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] = a => {
+    flatMap(f(a))(b => g(b))
+  }
 }
 
 object Monad {
