@@ -19,19 +19,23 @@ trait Functor[F[_]] {
 
 trait Monad[F[_]] {
 
+  // primitives
   def unit[A](a: => A): F[A]
+  def map[A,B](ma: F[A])(f: A => B): F[B] = flatMap(ma)(a => unit(f(a)))
+  def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => flatMap(ma)(a => unit(a)))
+  // rest 
   def flatMap[A,B](ma: F[A])(f: A => F[B]): F[B] = {
     val firstFunction: Unit => F[A] = _ => ma
     val result: (Unit) => F[B] = compose(firstFunction, f)
     result()
   }
+  def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] = a => {
+    flatMap(f(a))(b => g(b))
+  }
 
   def flatMapWithJoin[A,B](ma: F[A])(f: A => F[B]): F[B] = join(map(ma)(f))
   def composeWithJoin[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] = a => join(map(f(a))(g))
 
-  def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => flatMap(ma)(a => unit(a)))
-
-  def map[A,B](ma: F[A])(f: A => B): F[B] = flatMap(ma)(a => unit(f(a)))
 
   def map2[A,B,C](fa: F[A], fb: F[B])(f: (A,B) => C): F[C] =
     flatMap(fa)(a => map(fb)(b => f(a,b)))
@@ -56,9 +60,6 @@ trait Monad[F[_]] {
     case h :: t => flatMap(f(h))(b => if(b) map(filterM(t)(f))(h :: _) else filterM(t)(f))
   }
 
-  def compose[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] = a => {
-    flatMap(f(a))(b => g(b))
-  }
 }
 
 object Monad {
