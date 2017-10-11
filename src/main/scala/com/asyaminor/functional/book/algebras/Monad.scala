@@ -26,6 +26,9 @@ trait Monad[F[_]] {
     result()
   }
 
+  def flatMapWithJoin[A,B](ma: F[A])(f: A => F[B]): F[B] = join(map(ma)(f))
+  def composeWithJoin[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] = a => join(map(f(a))(g))
+
   def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => flatMap(ma)(a => unit(a)))
 
   def map[A,B](ma: F[A])(f: A => B): F[B] = flatMap(ma)(a => unit(f(a)))
