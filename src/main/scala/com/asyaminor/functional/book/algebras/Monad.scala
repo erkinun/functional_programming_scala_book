@@ -23,7 +23,7 @@ trait Monad[F[_]] {
   def unit[A](a: => A): F[A]
   def map[A,B](ma: F[A])(f: A => B): F[B] = flatMap(ma)(a => unit(f(a)))
   def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => flatMap(ma)(a => unit(a)))
-  // rest 
+  // rest
   def flatMap[A,B](ma: F[A])(f: A => F[B]): F[B] = {
     val firstFunction: Unit => F[A] = _ => ma
     val result: (Unit) => F[B] = compose(firstFunction, f)
@@ -89,9 +89,20 @@ object Monad {
     override def flatMap[A, B](ma: Option[A])(f: (A) => Option[B]) = ma.flatMap(a => f(a))
   }
 
+  val idMonad = new Monad[Id] {
+    override def unit[A](a: => A) = Id(a)
+    override def map[A,B](ma: Id[A])(f: A => B): Id[B] = ma.map(f)
+    override def flatMap[A, B](ma: Id[A])(f: (A) => Id[B]): Id[B] = ma.flatMap(f)
+  }
+
 //  val stateMonad = new Monad[State] {
 //    override def unit[A](a: => A) = State.unit(a)
 //    override def flatMap[A, B](ma: State[A])(f: (A) => State[B]) = ???
 //  }
 
+}
+
+case class Id[A](value: A) {
+  def map[B](f: A => B): Id[B] = Id(f(value))
+  def flatMap[B](f: A => Id[B]) = f(value)
 }
