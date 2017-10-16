@@ -1,8 +1,32 @@
 package com.asyaminor.functional.book.algebras
 
 trait Applicative[F[_]] extends Functor[F] {
-  def map2[A,B,C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C]
+
+  // define in terms of map2 and unit
+  def apply[A,B](fab: F[A => B])(fa: F[A]): F[B] = map2(fab, fa)((a2b, a) => a2b(a))
   def unit[A](a: => A): F[A]
+
+  // define in terms of apply
+  def map2[A,B,C](fa: F[A], fb: F[B])(f: (A, B) => C): F[C] = {
+    val curried: A => B => C = f.curried
+    val fbc: F[B => C] = apply(unit(curried))(fa)
+    apply(fbc)(fb)
+  }
+
+  def map3[A,B,C,D](fa: F[A],
+                    fb: F[B],
+                    fc: F[C])(f: (A, B, C) => D): F[D] = {
+    val curried: A => B => C => D = f.curried
+
+    apply(apply(apply(unit(curried))(fa))(fb))(fc)
+  }
+
+  def map4[A,B,C,D,E](fa: F[A], 
+                      fb: F[B],
+                      fc: F[C],
+                      fd: F[D])(f: (A, B, C, D) => E): F[E] = {
+    apply(apply(apply(apply(unit(f.curried))(fa))(fb))(fc))(fd)
+  }
 
   def map[A, B](fa: F[A])(f: A => B): F[B] = map2(fa, unit(()))((a, _) => f(a))
 
