@@ -17,11 +17,11 @@ trait Functor[F[_]] {
   }
 }
 
-trait Monad[F[_]] {
+trait Monad[F[_]] extends Applicative[F] {
 
   // primitives
   def unit[A](a: => A): F[A]
-  def map[A,B](ma: F[A])(f: A => B): F[B] = flatMap(ma)(a => unit(f(a)))
+  override def map[A,B](ma: F[A])(f: A => B): F[B] = flatMap(ma)(a => unit(f(a)))
   def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => flatMap(ma)(a => unit(a)))
   // rest
   def flatMap[A,B](ma: F[A])(f: A => F[B]): F[B] = {
@@ -37,23 +37,23 @@ trait Monad[F[_]] {
   def composeWithJoin[A,B,C](f: A => F[B], g: B => F[C]): A => F[C] = a => join(map(f(a))(g))
 
 
-  def map2[A,B,C](fa: F[A], fb: F[B])(f: (A,B) => C): F[C] =
+  override def map2[A,B,C](fa: F[A], fb: F[B])(f: (A,B) => C): F[C] =
     flatMap(fa)(a => map(fb)(b => f(a,b)))
 
 
-  def sequence[A](lma: List[F[A]]): F[List[A]] = lma match {
-    case Nil => unit(Nil)
-    case h :: t => flatMap(h)(a => map(sequence(t))(listA => a :: listA))
-  }
-
-  def traverse[A,B](la: List[A])(f: A => F[B]): F[List[B]] = la match {
-    case Nil => unit(Nil)
-    case h :: t => flatMap(f(h))(b => map(traverse(t)(f))(list => b :: list))
-  }
-
-  def replicateM[A](n: Int, ma: F[A]): F[List[A]] = sequence(List.fill(n)(ma))
-
-  def product[A,B](ma: F[A], mb: F[B]): F[(A, B)] = map2(ma, mb)((_, _))
+//  def sequence[A](lma: List[F[A]]): F[List[A]] = lma match {
+//    case Nil => unit(Nil)
+//    case h :: t => flatMap(h)(a => map(sequence(t))(listA => a :: listA))
+//  }
+//
+//  def traverse[A,B](la: List[A])(f: A => F[B]): F[List[B]] = la match {
+//    case Nil => unit(Nil)
+//    case h :: t => flatMap(f(h))(b => map(traverse(t)(f))(list => b :: list))
+//  }
+//
+//  def replicateM[A](n: Int, ma: F[A]): F[List[A]] = sequence(List.fill(n)(ma))
+//
+//  def product[A,B](ma: F[A], mb: F[B]): F[(A, B)] = map2(ma, mb)((_, _))
 
   def filterM[A](ms: List[A])(f: A => F[Boolean]): F[List[A]] = ms match {
     case Nil => unit(Nil)
