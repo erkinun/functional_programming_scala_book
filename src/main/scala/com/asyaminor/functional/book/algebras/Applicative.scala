@@ -1,5 +1,7 @@
 package com.asyaminor.functional.book.algebras
 
+import com.asyaminor.functional.book.datastructures.{Failure, Success, Validation}
+
 trait Applicative[F[_]] extends Functor[F] {
 
   // define in terms of map2 and unit
@@ -39,4 +41,25 @@ trait Applicative[F[_]] extends Functor[F] {
   }
   def replicateM[A](n: Int, fa: F[A]): F[List[A]] = sequence(List.fill(n)(fa))
   def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_, _))
+}
+
+object Applicative {
+  val streamApplicative = new Applicative[Stream] {
+    override def unit[A](a: => A) = Stream.continually(a)
+    override def map2[A,B,C](a: Stream[A], b: Stream[B])( f: (A,B) => C): Stream[C] =
+      a zip b map f.tupled
+  }
+
+  def validationApplicative[E]: Applicative[({type f[x] = Validation[E,x]})#f] = {
+    new Applicative[({type f[x] = Validation[E,x]})#f] {
+      override def unit[A](a: => A) = Success(a)
+      override def map2[A,B,C](fa: Validation[E,A], fb: Validation[E,B])(f: (A, B) => C): Validation[E, C] =
+        (fa, fb) match {
+          case (Success(a), Success(b)) => Success(f(a,b))
+          case (first@Failure(_, _), Success(_)) => first
+          case (Success(_), second@Failure(_, _)) => second
+          case (Failure(ha, ta), Failure(hb, tb)) => Failure(ha, ta ++ Vector(hb) ++ tb)
+        }
+    }
+  }
 }

@@ -95,10 +95,18 @@ object Monad {
     override def flatMap[A, B](ma: Id[A])(f: (A) => Id[B]): Id[B] = ma.flatMap(f)
   }
 
-//  val stateMonad = new Monad[State] {
-//    override def unit[A](a: => A) = State.unit(a)
-//    override def flatMap[A, B](ma: State[A])(f: (A) => State[B]) = ???
-//  }
+  import com.asyaminor.functional.book.datastructures.either.Either
+  import com.asyaminor.functional.book.datastructures.either.Right
+  import com.asyaminor.functional.book.datastructures.either.Left
+
+
+  def eitherMonad[E]: Monad[({type f[x] = Either[E, x]})#f] = new Monad[({type f[x] = Either[E, x]})#f] {
+    override def unit[A](a: => A): Either[E, A] = Right(a)
+    override def flatMap[A,B](eea: Either[E, A])(f: A => Either[E, B]): Either[E, B] = eea match {
+      case Right(a) => f(a)
+      case Left(e) => Left(e)
+    }
+  }
 
 }
 
