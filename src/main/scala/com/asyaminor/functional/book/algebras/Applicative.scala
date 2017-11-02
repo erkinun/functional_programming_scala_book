@@ -39,9 +39,64 @@ trait Applicative[F[_]] extends Functor[F] {
     case Nil => unit(Nil)
     case h :: t => map2(h, sequence(t))((a, b) => a :: b)
   }
+
+  def sequenceMap[K,V](ofa: Map[K,F[V]]): F[Map[K,V]] = ofa.foldLeft(unit(Map():Map[K,V]))((acc, item) => {
+    map2(acc, item._2)((map, value) => {
+      val key = item._1
+      if (!map.contains(key)) map + (key -> value)
+      else map
+    })
+  })
+
   def replicateM[A](n: Int, fa: F[A]): F[List[A]] = sequence(List.fill(n)(fa))
   def product[A,B](fa: F[A], fb: F[B]): F[(A,B)] = map2(fa, fb)((_, _))
+
+  def product[G[_]](G: Applicative[G]): Applicative[({type f[x] = (F[x], G[x])})#f] = {
+    val self = this
+    new Applicative[({type f[x] = (F[x], G[x])})#f] {
+      def unit[A](a: => A) = (self.unit(a), G.unit(a))
+      override def apply[A,B](fs: (F[A => B], G[A => B]))(p: (F[A], G[A])) =
+        (self.apply(fs._1)(p._1), G.apply(fs._2)(p._2))
+    }
+  }
+
+
+  def compose[G[_]](G: Applicative[G]): Applicative[({type f[x] = F[G[x]]})#f] = {
+    new Applicative[({type f[x] = F[G[x]]})#f] {
+      override def unit[A](a: => A): F[G[A]] = unit(a)
+      override def map[A, B](fa: F[G[A]])(f: A => B): F[G[B]] = map(fa)(f)
+    }
+  }
 }
+
+//trait Traverse[F[_]] {
+//  def traverse[G[_]:Applicative,A,B](fa: F[A])(f: A => G[B]): G[F[B]] =
+//    sequence(map(fa)(f))
+//  def sequence[G[_]:Applicative,A](fga: F[G[A]]): G[F[A]] =
+//    traverse(fga)(ga => ga)
+//}
+//
+//case class Tree[+A](head: A, tail: List[Tree[A]])
+//
+//object Traverse {
+//  val listTraverse = new Traverse[List] {
+//    def traverse[G[_] : Applicative, A, B](fa: List[A])(f: A => G[B])(implicit G: Applicative[G]): G[List[B]] =
+//      fa.foldLeft(G.unit(List[B]()))((list, a) => G.map2(f(a), list)(_ :: _))
+//  }
+//
+//  val optionTraverse = new Traverse[Option] {
+//    override def traverse[G[_],A,B](oa: Option[A])(f: A => G[B])(implicit G: Applicative[G]): G[Option[B]] =
+//      oa match {
+//        case None => G.unit(None)
+//        case Some(a) => G.map(f(a))(Some(_))
+//      }
+//  }
+//
+//  val treeTraverse = new Traverse[Tree] {
+//    override def traverse[G[_],A,B](ta: Tree[A])(f: A => G[B])(implicit G: Applicative[G]): G[Tree[B]] =
+//      G.map2(f(ta.head), listTraverse.traverse(ta.tail)(a => traverse(a)(f)))(Tree(_, _))
+//  }
+//}
 
 object Applicative {
   val streamApplicative = new Applicative[Stream] {
