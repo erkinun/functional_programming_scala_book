@@ -93,6 +93,17 @@ object Process {
 
     go(0)
   }
+
+  def mean: Process[Double,Double] = {
+    def go(mean:Double, count: Int): Process[Double, Double] = Await {
+      case Some(num) =>
+        val newMean = (mean * count + num) / (count + 1)
+        Emit(newMean, go(newMean, count + 1))
+      case None => Halt()
+    }
+
+    go(0.0, 0)
+  }
 }
 
 
