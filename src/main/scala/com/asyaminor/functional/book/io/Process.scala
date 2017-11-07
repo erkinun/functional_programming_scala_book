@@ -104,6 +104,14 @@ object Process {
 
     go(0.0, 0)
   }
+
+  def loop[S,I,O](z: S)(f: (I,S) => (O,S)): Process[I,O] =
+    await((i: I) => f(i,z) match {
+      case (o,s2) => emit(o, loop(s2)(f))
+    })
+
+  def sumLoop: Process[Double,Double] = loop(0.0)((num, sumSoFar) => (num + sumSoFar, num + sumSoFar))
+  def countLoop[I]: Process[I,Int] = loop(0)((_, countSoFar) => (countSoFar + 1, countSoFar + 1))
 }
 
 
