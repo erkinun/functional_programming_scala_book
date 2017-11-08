@@ -23,6 +23,16 @@ sealed trait Process[I,O] {
     go(this)
   }
 
+  def |>[O2](p2: Process[O,O2]): Process[I,O2] = p2 match {
+    case Halt() => Halt()
+    case Emit(h2, t2) => Emit(h2, |>(t2))
+    case Await(rec2) => this match {
+      case Emit(h, t) => t |> rec2(Some(h))
+      case Halt() => Halt() |> rec2(None)
+      case Await(rec1) => Await(i => rec1(i) |> p2)
+    }
+  }
+  
 }
 
 case class Emit[I,O](
