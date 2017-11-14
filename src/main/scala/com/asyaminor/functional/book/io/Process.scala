@@ -1,5 +1,7 @@
 package com.asyaminor.functional.book.io
 
+import com.asyaminor.functional.book.algebras.Monad
+
 sealed trait Process[I,O] {
   def apply(s: Stream[I]): Stream[O] =
     this match {
@@ -32,7 +34,29 @@ sealed trait Process[I,O] {
       case Await(rec1) => Await(i => rec1(i) |> p2)
     }
   }
-  
+
+  def map[O2](f: O => O2): Process[I,O2] = this |> Process.lift(f)
+
+
+  def ++(p: => Process[I,O]): Process[I,O] = this match {
+    case Halt() => p
+    case Emit(h, t) => Emit(h, t ++ p)
+    case Await(recv) => Await(i => recv(i) ++ p)
+  }
+
+  def flatMap[O2](f: O => Process[I,O2]): Process[I,O2] = this match {
+    case Halt() => Halt()
+    case Emit(h, t) => f(h) ++ t.flatMap(f)
+    case Await(recv) => Await(recv andThen (_ flatMap f))
+  }
+
+  def monad[I]: Monad[({ type f[x] = Process[I,x]})#f] = new Monad[({ type f[x] = Process[I,x]})#f] {
+    def unit[O](o: => O): Process[I,O] = Emit(o)
+
+    override def flatMap[O,O2](p: Process[I,O])(f: O => Process[I,O2]): Process[I,O2] =
+      p flatMap f
+  }
+
 }
 
 case class Emit[I,O](
@@ -102,6 +126,15 @@ object Process {
     }
 
     go(0)
+  }
+
+  def exists[I](f: I => Boolean): Process[I,Boolean] = Await {
+    case Some(i) => {
+      val result = f(i)
+      if (result) Emit(true)
+      else Emit(false, exists(f))
+    }
+    case None => Emit(false)
   }
 
   def mean: Process[Double,Double] = {
